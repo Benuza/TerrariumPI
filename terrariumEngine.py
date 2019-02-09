@@ -27,6 +27,7 @@ from terrariumWeather import terrariumWeather, terrariumWeatherSourceException
 from terrariumSensor import terrariumSensor
 from terrariumSwitch import terrariumPowerSwitch
 from terrariumDoor import terrariumDoor
+from terrariumButton import terrariumButton
 from terrariumWebcam import terrariumWebcam, terrariumWebcamSourceException
 from terrariumAudio import terrariumAudioPlayer
 from terrariumCollector import terrariumCollector
@@ -135,6 +136,9 @@ class terrariumEngine(object):
 
     # Load doors from config
     self.__load_doors()
+
+    # Load buttons from config
+    self.__load_buttons()
 
     # Load the environment system. This will controll the lights, sprayer and heaters
     logger.debug('Loading terrariumPI environment system')
@@ -331,6 +335,56 @@ class terrariumEngine(object):
     logger.info('Done %s terrariumPI doors. Found %d doors in %.3f seconds' % ('reloading' if reloading else 'loading',
                                                                               len(self.doors),
                                                                               time.time()-starttime))
+
+
+
+  def __load_buttons(self,data = None):
+    # Load Buttons, with ID as index
+    starttime = time.time()
+    reloading = data is not None
+
+    logger.info('%s terrariumPI buttons' % ('Reloading' if reloading else 'Loading',))
+
+    button_config = (self.config.get_buttons() if not reloading else data)
+    if not reloading:
+      self.buttons = {}
+
+    seen_buttons = []
+    terrariumButton.scan_buttons(self.buttons,self.toggle_button_status)
+
+    for buttondata in button_config:
+      if buttondata['id'] is None or buttondata['id'] == 'None' or buttondata['id'] not in self.buttons:
+        # New button (add)
+        button = terrariumButton(None,
+                                buttondata['hardwaretype'],
+                                buttondata['address'],
+                                buttondata['name'],
+                                buttondata['trigger'],
+                                callback=self.toggle_button_status)
+        self.buttons[button.get_id()] = button
+      else:
+        # Existing switch
+        button = self.buttons[buttondata['id']]
+        # Should not be able to change setings
+        #button.set_hardware_type(buttondata['hardwaretype'])
+        button.set_address(buttondata['address'])
+        button.set_name(buttondata['name'])
+        button.set_trigger(buttondata['trigger'])
+
+      seen_buttons.append(button.get_id())
+
+    if reloading:
+      for button_id in set(self.buttons) - set(seen_buttons):
+        # clean up old deleted switches
+        del(self.buttons[button_id])
+
+    logger.info('Done %s terrariumPI buttons. Found %d buttons in %.3f seconds' % ('reloading' if reloading else 'loading',
+                                                                                    len(self.buttons),
+                                                                                    time.time()-starttime))
+
+
+
+
 
   def __load_webcams(self, data = None):
     # Load Webcams, with ID as index
@@ -764,6 +818,28 @@ class terrariumEngine(object):
   def is_door_closed(self):
     return not self.is_door_open()
   # End doors part
+
+
+
+  def toggle_button_status(self, data):
+    print('Terrarium Engine Toggle button with data')
+    print(data)
+
+    #http://terrariumpidev.theyosh.lan:8090/api/switch/toggle/1540410957
+
+    self.power_switches['1540410957'].toggle()
+
+
+    '''
+    if 'state' in data and 'open' == data['state']:
+      self.notification.message('door_toggle_open',data)
+    elif 'state' in data and 'closed' == data['state']:
+      self.notification.message('door_toggle_closed',data)
+
+    self.collector.log_door_data(data)
+    self.get_doors_status(socket=True)
+    self.get_doors(socket=True)
+    '''
 
   # Webcams part
   def get_webcams(self, parameters = [], socket = False):

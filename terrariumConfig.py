@@ -731,6 +731,12 @@ class terrariumConfig(object):
   # End door config functions
 
 
+
+  def get_buttons(self):
+    return {}
+
+
+
   # Webcam config functions
   def save_webcam(self,data):
     if 'resolution' in data:

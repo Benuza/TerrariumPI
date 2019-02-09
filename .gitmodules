@@ -19,3 +19,6 @@
 [submodule "hls-proxy"]
 	path = hls-proxy
 	url = https://github.com/Viblast/hls-proxy.git
+[submodule "fliclib-linux-hci"]
+	path = fliclib-linux-hci
+	url = https://github.com/50ButtonsEach/fliclib-linux-hci.git
