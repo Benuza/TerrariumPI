@@ -436,7 +436,7 @@ class terrariumSensor(object):
   UPDATE_TIMEOUT = 29
   ERROR_TIMEOUT = 10 * 60 # 10 minutes
 
-  SENSORS = {terrariumRemoteSensor,
+  SENSORS = [terrariumRemoteSensor,
              terrarium1WSensor,
              terrariumOWFSSensor,
              terrariumMiFloraSensor,
@@ -452,7 +452,7 @@ class terrariumSensor(object):
              terrariumBME280Sensor,
              terrariumVEML6075Sensor,
              terrariumChirpSensor,
-             terrariumSHT3XSensor}
+             terrariumSHT3XSensor]
 
   def __new__(self, sensor_id, hardware_type, sensor_type, address, name = '', callback_indicator = None):
     for sensor in terrariumSensor.SENSORS:
@@ -460,6 +460,14 @@ class terrariumSensor(object):
         return sensor(sensor_id, sensor_type, address, name, callback_indicator)
 
     raise terrariumSensorTypeException('Power switch of type \'{}\' is unknown. We cannot controll this sensor.'.format(hardware_type))
+
+  @staticmethod
+  def valid_hardware_types2():
+    data = {}
+    for sensor in terrariumSensor.SENSORS:
+      data[sensor.TYPE] = sensor.VALID_SENSOR_TYPES
+
+    return data
 
   @staticmethod
   def valid_hardware_types():
